@@ -1,0 +1,81 @@
+
+% Implementation for Feature Selection and Ensemble Feature Selection
+% Christoph Lohrmann, Reykjavik University, Iceland
+
+% [Optional] File Paths
+%% Paths
+rootFolder = fileparts(mfilename('fullpath'));
+if isempty(rootFolder), rootFolder = pwd; end
+
+addpath(genpath(fullfile(rootFolder, 'src', 'core')));
+addpath(genpath(fullfile(rootFolder, 'src', 'fs_methods')));
+addpath(genpath(fullfile(rootFolder, 'src', 'classifiers')));
+
+dataFolder = fullfile(rootFolder, 'data');   % change to your data folder if stored elsewhere
+addpath(genpath(dataFolder));
+
+%% MI/SU version
+%   'original'  : reproduces the published results (MI/SU effectively use class 1 only) - Original Version from the "Feature Selection Library" (FSLib 2018)
+%   'corrected' : works as intended for any class labels (not just +1/-1)
+miVersion = 'corrected';
+
+addpath(fullfile(rootFolder, 'src', 'third_party', ['mi_' miVersion]));
+fprintf('MI/SU version used: %s\n', which('muteinf'));
+
+%% Seed (not used in paper)
+rng(1)
+
+%% Z: Load data set
+% Uses "load_dataset()"
+dataset_name = 'DLBCL';
+% [x, y] = load_dataset('Sonar','scale'); 
+[x, y] = load_dataset(dataset_name,'scale'); 
+
+muteinf_MI(x(:,1), y)
+muteinf_MI(x(:,1), 3 - y)
+
+%% Decision - current data set "small" or "large"
+% affects shares of features tested
+
+% Create Setups - SMALL Data Sets
+NoSetups = cell(1,1);
+
+NoSetups{1} = {'Function Perturbation [Ensemble]', ...
+    {'Chisquared','Fisher','MI','MRMR','Pearson','ReliefF','Strife','SU'}, ...
+    {'Ranking'}, {0.001, 0.01, 0.1, 0.25, 0.5, 0.8, 1}, ...
+    {'FKNN','MLPMFKNN'}, {}, ...
+    {'intersection','average','union'},...
+    {'none','none','none'}}
+
+%% A. General Hyperparameters
+
+% Detailed information (yes/no)
+hyperparam.info = 1; % 1: additional information, 0 no additional information
+hyperparam.runs = 5; % number of runs (of the entire process with external and internal CV)
+hyperparam.foldsexternalCV = 5; % number of folds (first CV split)
+hyperparam.foldsinternalCV = 5; % number of folds (second CV split) [used in for Objective Function]
+hyperparam.fobj = @ObjectiveFunction; % objective function
+hyperparam.objtype = 2; % 1 for error, 2 for 0.99 * Error + 0.01 * No retained features
+hyperparam.methodKNNkval = 5; % kvalue
+hyperparam.MLPMFKNNp = 1; % p-parameter for power mean
+hyperparam.ensemblebootstrapreplace = false; % share of data for bootstrap [FIXED]
+
+%% Run Ensemble Feature Selection
+tic
+[allresulttab, hyperparam] = applyEnsembleFS_efficient(x, y, NoSetups, hyperparam); % Save "resulttab" in struct
+toc
+
+% Statistical Testing
+Welchtab = my_WelchTest_Ensemble(allresulttab,  hyperparam);
+
+% Saving Results
+save_name = [dataset_name '25_Base.mat'];
+save(save_name,'allresulttab');
+
+
+%% Plot table (for individual data set)
+T_fknn = my_PaperTable(Welchtab, "FKNN", dataset_name);
+T_mlpm = my_PaperTable(Welchtab, "MLPMFKNN", dataset_name);
+disp(T_fknn)
+disp(T_mlpm)
+
