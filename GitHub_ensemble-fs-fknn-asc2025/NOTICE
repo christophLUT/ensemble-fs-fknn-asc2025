@@ -1,0 +1,8 @@
+ensemble-fs-fknn
+Copyright 2025 Christoph Lohrmann, Alena Lohrmann, Mahinda Mailagaha Kumbure
+
+Code for: On the benefit of feature selection and ensemble feature selection
+for fuzzy k-nearest neighbor classification. Applied Soft Computing 171 (2025) 112784.
+https://doi.org/10.1016/j.asoc.2025.112784
+
+Includes third-party code (see src/third_party and file headers for their licenses).
