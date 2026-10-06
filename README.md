@@ -22,9 +22,7 @@ If you use this code in your work, we kindly ask you to cite the paper above.
 
 ## Getting started
 
-1. Obtain the data sets and either place them in `data/`
-   or set `dataFolder` in the main script to the folder where they are stored.
-   The data sets are not included in this repository. They are freely available
+1. The data sets are not included in this repository. They are freely available
    from the sources listed in the article.
 2. Set the MATLAB current folder to this repository folder.
 3. Open `EFS_Ranking_application.m`, select a data set and run the script (F5).
